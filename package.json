@@ -1,0 +1,8 @@
+{
+  "name": "realestate-api",
+  "version": "1.0.0",
+  "description": "Send Firebase notifications from Vercel",
+  "dependencies": {
+    "firebase-admin": "^13.7.0"
+  }
+}
