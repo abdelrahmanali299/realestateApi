@@ -114,7 +114,7 @@ module.exports = async function handler(req, res) {
             return res.status(405).json({ message: "Only POST allowed" });
         }
 
-        const { title, body, realestateId } = req.body;
+        const { title, body, realestateId, imageUrl } = req.body;
 
         if (!title || !body) {
             return res.status(400).json({
@@ -122,12 +122,40 @@ module.exports = async function handler(req, res) {
             });
         }
 
+        // const message = {
+        //     topic: "realestate",
+
+        //     notification: {
+        //         title: title,
+        //         body: body,
+        //     },
+
+        //     data: {
+        //         realestateId: realestateId ? String(realestateId) : "",
+        //     },
+
+        //     android: {
+        //         priority: "high",
+        //         notification: {
+        //             channelId: "realestate_channel",
+        //         },
+        //     },
+
+        //     apns: {
+        //         payload: {
+        //             aps: {
+        //                 contentAvailable: true,
+        //             },
+        //         },
+        //     },
+        // };
         const message = {
             topic: "realestate",
 
             notification: {
                 title: title,
                 body: body,
+                imageUrl: imageUrl, // السطر ده أساسي عشان الصورة تظهر (FCM v1 API)
             },
 
             data: {
@@ -138,6 +166,7 @@ module.exports = async function handler(req, res) {
                 priority: "high",
                 notification: {
                     channelId: "realestate_channel",
+                    imageUrl: imageUrl, // تأكيد إضافي للأندرويد
                 },
             },
 
@@ -145,7 +174,11 @@ module.exports = async function handler(req, res) {
                 payload: {
                     aps: {
                         contentAvailable: true,
+                        mutableContent: true, // مهم جداً للأيفون عشان يعالج الصور
                     },
+                },
+                fcmOptions: {
+                    imageUrl: imageUrl, // تأكيد إضافي للأيفون
                 },
             },
         };
