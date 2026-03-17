@@ -356,113 +356,113 @@
 //         return res.status(500).json({ success: false, error: error.message });
 //     }
 // };
-// const admin = require("firebase-admin");
+const admin = require("firebase-admin");
 
-// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-// if (!admin.apps.length) {
-//     admin.initializeApp({
-//         credential: admin.credential.cert(serviceAccount),
-//     });
-// }
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
 
-// module.exports = async function handler(req, res) {
-//     try {
-//         if (req.method !== "POST") {
-//             return res.status(405).json({ message: "Only POST allowed" });
-//         }
+module.exports = async function handler(req, res) {
+    try {
+        if (req.method !== "POST") {
+            return res.status(405).json({ message: "Only POST allowed" });
+        }
 
-//         const { title, body, type, realestateId } = req.body;
+        const { title, body, type, realestateId } = req.body;
 
-//         if (!title || !body || !type) {
-//             return res.status(400).json({ error: "title, body and type required" });
-//         }
+        if (!title || !body || !type) {
+            return res.status(400).json({ error: "title, body and type required" });
+        }
 
-//         const db = admin.firestore();
+        const db = admin.firestore();
 
-//         const pageSize = 500;
-//         let lastDoc = null;
-//         let totalUsersProcessed = 0;
-//         let page = 1;
+        const pageSize = 500;
+        let lastDoc = null;
+        let totalUsersProcessed = 0;
+        let page = 1;
 
-//         while (true) {
-//             // ✅ Pagination
-//             let query = db.collection("users").limit(pageSize);
+        while (true) {
+            // ✅ Pagination
+            let query = db.collection("users").limit(pageSize);
 
-//             if (lastDoc) {
-//                 query = query.startAfter(lastDoc);
-//             }
+            if (lastDoc) {
+                query = query.startAfter(lastDoc);
+            }
 
-//             const snapshot = await query.get();
+            const snapshot = await query.get();
 
-//             if (snapshot.empty) {
-//                 break;
-//             }
+            if (snapshot.empty) {
+                break;
+            }
 
-//             const batch = db.batch();
+            const batch = db.batch();
 
-//             // ✅ Add notifications لكل user في الصفحة
-//             snapshot.docs.forEach((userDoc) => {
-//                 const notifRef = db
-//                     .collection("users")
-//                     .doc(userDoc.id)
-//                     .collection("notifications")
-//                     .doc();
+            // ✅ Add notifications لكل user في الصفحة
+            snapshot.docs.forEach((userDoc) => {
+                const notifRef = db
+                    .collection("users")
+                    .doc(userDoc.id)
+                    .collection("notifications")
+                    .doc();
 
-//                 batch.set(notifRef, {
-//                     notificationId: notifRef.id,
-//                     title,
-//                     body,
-//                     type,
-//                     data: { realestateId: realestateId || "" },
-//                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-//                     isRead: false,
-//                 });
-//             });
+                batch.set(notifRef, {
+                    notificationId: notifRef.id,
+                    title,
+                    body,
+                    type,
+                    data: { realestateId: realestateId || "" },
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    isRead: false,
+                });
+            });
 
-//             await batch.commit();
+            await batch.commit();
 
-//             totalUsersProcessed += snapshot.size;
+            totalUsersProcessed += snapshot.size;
 
-//             console.log(`Page ${page} done - ${snapshot.size} users`);
+            console.log(`Page ${page} done - ${snapshot.size} users`);
 
-//             // ✅ آخر document علشان الصفحة اللي بعدها
-//             lastDoc = snapshot.docs[snapshot.docs.length - 1];
-//             page++;
-//         }
+            // ✅ آخر document علشان الصفحة اللي بعدها
+            lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            page++;
+        }
 
-//         console.log("All users processed:", totalUsersProcessed);
+        console.log("All users processed:", totalUsersProcessed);
 
-//         // ✅ إرسال FCM مرة واحدة لكل المستخدمين
-//         const message = {
-//             topic: "realestate",
-//             notification: { title, body },
-//             data: {
-//                 type,
-//                 realestateId: realestateId || "",
-//             },
-//             android: {
-//                 priority: "high",
-//                 notification: { channelId: "realestate_channel" },
-//             },
-//             apns: {
-//                 payload: { aps: { contentAvailable: true } },
-//             },
-//         };
+        // ✅ إرسال FCM مرة واحدة لكل المستخدمين
+        const message = {
+            topic: "realestate",
+            notification: { title, body },
+            data: {
+                type,
+                realestateId: realestateId || "",
+            },
+            android: {
+                priority: "high",
+                notification: { channelId: "realestate_channel" },
+            },
+            apns: {
+                payload: { aps: { contentAvailable: true } },
+            },
+        };
 
-//         const response = await admin.messaging().send(message);
+        const response = await admin.messaging().send(message);
 
-//         return res.status(200).json({
-//             success: true,
-//             messageId: response,
-//             totalUsersProcessed,
-//         });
+        return res.status(200).json({
+            success: true,
+            messageId: response,
+            totalUsersProcessed,
+        });
 
-//     } catch (error) {
-//         console.error("Error:", error);
-//         return res.status(500).json({
-//             success: false,
-//             error: error.message,
-//         });
-//     }
-// };
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
